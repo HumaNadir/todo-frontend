@@ -1,40 +1,25 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./styles./globals.css";
-import { AuthProvider } from "../lib/auth-context";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import "../styles/globals.css";
+import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
   title: "Todo App",
-  description: "A simple todo app with signup, login, and todos",
+  description: "A simple Todo App with Next.js, Zustand, and TypeScript",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <AuthProvider>
-          <nav style={{ display: "flex", gap: "1rem", padding: "1rem", background: "#f4f4f4" }}>
-            <a href="/signup">Signup</a>
-            <a href="/login">Login</a>
-            <a href="/todos">Todos</a>
-          </nav>
-          <main>{children}</main>
-        </AuthProvider>
+      <body>
+        {/* Navbar is a Client Component, but layout.tsx is Server — this is allowed */}
+        <Navbar />
+        <main className="container mx-auto p-4">{children}</main>
       </body>
     </html>
   );
 }
+
