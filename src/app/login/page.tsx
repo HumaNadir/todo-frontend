@@ -2,25 +2,36 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { login } from "../../services/auth.service";
+import { login as loginService } from "../../services/auth.service"; // renamed to avoid clash
 import { useAuthStore } from "../../store/auth.store";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login: setAuth } = useAuthStore();
+  const setAuth = useAuthStore((state) => state.login); // ✅ cleaner access to login fn
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    setLoading(true);
+
     try {
-      const { accessToken, user } = await login({ email, password });
-      setAuth(user, accessToken); // save in zustand
+      // call API
+      const { accessToken, user } = await loginService({ email, password });
+
+      // ✅ save in Zustand
+      setAuth(user, accessToken);
+
+      // ✅ redirect
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.response?.data?.message || "Login failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -40,6 +51,7 @@ export default function LoginPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="w-full p-2 mb-3 border rounded text-black"
+          required
         />
         <input
           type="password"
@@ -47,12 +59,16 @@ export default function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="w-full p-2 mb-3 border rounded text-black"
+          required
         />
-        <button className="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700 transition">
-          Login
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700 transition disabled:opacity-50"
+        >
+          {loading ? "Logging in..." : "Login"}
         </button>
       </form>
     </div>
   );
 }
-

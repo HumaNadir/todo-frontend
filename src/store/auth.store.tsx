@@ -1,10 +1,10 @@
 // src/store/auth.store.tsx
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 type User = {
   id: string;
   email: string;
-  // add more fields if your backend provides them
 };
 
 type AuthState = {
@@ -12,20 +12,32 @@ type AuthState = {
   token: string | null;
   login: (user: User, token: string) => void;
   logout: () => void;
+  hasHydrated: boolean;
 };
 
-// Zustand store
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  token: typeof window !== "undefined" ? localStorage.getItem("token") : null,
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      token: null,
+      hasHydrated: false,
 
-  login: (user, token) => {
-    localStorage.setItem("token", token);
-    set({ user, token });
-  },
+      login: (user, token) => {
+        set({ user, token });
+      },
 
-  logout: () => {
-    localStorage.removeItem("token");
-    set({ user: null, token: null });
-  },
-}));
+      logout: () => {
+        set({ user: null, token: null });
+      },
+    }),
+    {
+      name: "auth-storage",
+      onRehydrateStorage: () => (state, error) => {
+        if (!error && state) {
+          // ✅ directly update state.hasHydrated
+          state.hasHydrated = true;
+        }
+      },
+    }
+  )
+);

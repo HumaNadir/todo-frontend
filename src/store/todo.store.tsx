@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import todoStore from "@/store/todo.store";
 
 export interface Todo {
   id: number;
@@ -10,12 +9,14 @@ export interface Todo {
 interface TodoStore {
   todos: Todo[];
   addTodo: (title: string) => void;
+  updateTodo: (id: number, title: string) => void;
   toggleTodo: (id: number) => void;
   removeTodo: (id: number) => void;
 }
 
 const useTodoStore = create<TodoStore>((set) => ({
   todos: [],
+
   addTodo: (title) =>
     set((state) => ({
       todos: [
@@ -23,12 +24,21 @@ const useTodoStore = create<TodoStore>((set) => ({
         { id: Date.now(), title, completed: false },
       ],
     })),
+
+  updateTodo: (id, title) =>
+    set((state) => ({
+      todos: state.todos.map((todo) =>
+        todo.id === id ? { ...todo, title } : todo
+      ),
+    })),
+
   toggleTodo: (id) =>
     set((state) => ({
       todos: state.todos.map((todo) =>
         todo.id === id ? { ...todo, completed: !todo.completed } : todo
       ),
     })),
+
   removeTodo: (id) =>
     set((state) => ({
       todos: state.todos.filter((todo) => todo.id !== id),
@@ -36,3 +46,4 @@ const useTodoStore = create<TodoStore>((set) => ({
 }));
 
 export default useTodoStore;
+

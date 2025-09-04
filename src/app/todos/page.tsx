@@ -6,19 +6,32 @@ import useTodoStore from "@/store/todo.store";
 export default function TodosPage() {
   const { todos, addTodo, updateTodo, toggleTodo, removeTodo } = useTodoStore();
   const [newTodo, setNewTodo] = useState("");
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingText, setEditingText] = useState("");
 
   const handleAddTodo = () => {
     if (newTodo.trim()) {
-      addTodo(newTodo);
+      addTodo(newTodo.trim());
       setNewTodo("");
     }
   };
 
-  const handleEditTodo = (id: number, oldTitle: string) => {
-    const updated = prompt("Edit todo:", oldTitle);
-    if (updated && updated.trim()) {
-      updateTodo(id, updated.trim());
+  const handleEditStart = (id: number, currentTitle: string) => {
+    setEditingId(id);
+    setEditingText(currentTitle);
+  };
+
+  const handleEditSave = (id: number) => {
+    if (editingText.trim()) {
+      updateTodo(id, editingText.trim());
     }
+    setEditingId(null);
+    setEditingText("");
+  };
+
+  const handleEditCancel = () => {
+    setEditingId(null);
+    setEditingText("");
   };
 
   return (
@@ -30,6 +43,7 @@ export default function TodosPage() {
         <input
           value={newTodo}
           onChange={(e) => setNewTodo(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleAddTodo()}
           placeholder="Add new todo"
           className="border p-2 rounded w-full"
         />
@@ -48,27 +62,56 @@ export default function TodosPage() {
             key={todo.id}
             className="flex justify-between items-center mb-2"
           >
-            <span
-              onClick={() => toggleTodo(todo.id)}
-              className={`cursor-pointer ${
-                todo.completed ? "line-through text-gray-500" : ""
-              }`}
-            >
-              {todo.title}
-            </span>
+            {editingId === todo.id ? (
+              <input
+                value={editingText}
+                onChange={(e) => setEditingText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleEditSave(todo.id);
+                  if (e.key === "Escape") handleEditCancel();
+                }}
+                autoFocus
+                className="border p-1 rounded w-full"
+              />
+            ) : (
+              <span
+                onClick={() => toggleTodo(todo.id)}
+                className={`cursor-pointer ${
+                  todo.completed ? "line-through text-gray-500" : ""
+                }`}
+              >
+                {todo.title}
+              </span>
+            )}
             <div className="flex gap-2">
-              <button
-                onClick={() => handleEditTodo(todo.id, todo.title)}
-                className="text-yellow-500"
-              >
-                ✎
-              </button>
-              <button
-                onClick={() => removeTodo(todo.id)}
-                className="text-red-500"
-              >
-                ✕
-              </button>
+              {editingId === todo.id ? (
+                <>
+                  <button
+                    onClick={() => handleEditSave(todo.id)}
+                    className="text-green-500"
+                  >
+                    ✔
+                  </button>
+                  <button onClick={handleEditCancel} className="text-gray-500">
+                    ✕
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => handleEditStart(todo.id, todo.title)}
+                    className="text-yellow-500"
+                  >
+                    ✎
+                  </button>
+                  <button
+                    onClick={() => removeTodo(todo.id)}
+                    className="text-red-500"
+                  >
+                    ✕
+                  </button>
+                </>
+              )}
             </div>
           </li>
         ))}
